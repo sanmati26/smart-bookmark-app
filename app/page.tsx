@@ -59,32 +59,37 @@ export default function Home() {
 
   // Realtime subscription
   useEffect(() => {
-    if (!user) return;
-    const channel = supabase
-      .channel(`bookmarks_user_${user.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "bookmarks",
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload) => {
-          if (payload.eventType === "INSERT") {
-            setBookmarks((prev) => [payload.new as Bookmark, ...prev]);
-          }
-          if (payload.eventType === "DELETE") {
-            setBookmarks((prev) =>
-              prev.filter((b) => b.id !== (payload.old as Bookmark).id)
-            );
-          }
-        }
-      )
-      .subscribe();
+  if (!user) return;
 
-    return () => supabase.removeChannel(channel);
-  }, [user]);
+  const channel = supabase
+    .channel(`bookmarks_user_${user.id}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "bookmarks",
+        filter: `user_id=eq.${user.id}`,
+      },
+      (payload) => {
+        if (payload.eventType === "INSERT") {
+          setBookmarks((prev) => [payload.new as Bookmark, ...prev]);
+        }
+        if (payload.eventType === "DELETE") {
+          setBookmarks((prev) =>
+            prev.filter((b) => b.id !== (payload.old as Bookmark).id)
+          );
+        }
+      }
+    )
+    .subscribe();
+
+  return () => {
+    // async call is wrapped, but cleanup is sync
+    supabase.removeChannel(channel).then(() => {}).catch(() => {});
+  };
+}, [user]);
+
 
   // Login / Logout
   const handleLogin = async () => {
