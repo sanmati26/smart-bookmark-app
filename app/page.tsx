@@ -58,7 +58,7 @@ export default function Home() {
   };
 
   // Realtime subscription
-  useEffect(() => {
+useEffect(() => {
   if (!user) return;
 
   const channel = supabase
@@ -84,11 +84,12 @@ export default function Home() {
     )
     .subscribe();
 
+  // Correct cleanup
   return () => {
-    // async call is wrapped, but cleanup is sync
-    supabase.removeChannel(channel).then(() => {}).catch(() => {});
+    supabase.removeChannel(channel);
   };
 }, [user]);
+
 
 
   // Login / Logout
